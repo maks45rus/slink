@@ -90,8 +90,15 @@ void copykatalog(char* name,char* newdir)
 		}
 		
         switch (info->d_type) {
-            case DT_DIR:  copykatalog(file, newfile); break;
-            case DT_LNK:  printf("link\n"); break;
+            case DT_DIR:
+				copykatalog(file, newfile);
+				break;
+            case DT_LNK:
+				char link_target[1024];
+				int len = readlink(file, link_target, sizeof(link_target)-1);
+				link_target[len] = '\0';
+				symlink(link_target, newfile);
+				break;
 			default: 
 				int fd = open(newfile, O_WRONLY | O_CREAT | O_TRUNC, file_info.st_mode);
 				if (fd >= 0) close(fd);

@@ -65,6 +65,25 @@ void grayscale(unsigned char **pixels, int width, int height)
 
 void cutimage(unsigned char **pixels, int width, int height, int startX, int startY, int endX, int endY)
 {
+	if (startX > endX){
+		int tmp;
+		tmp = startX;
+		startX=endX;
+		endX=tmp;
+	}
+	if (startY > endY){
+		int tmp;
+		tmp = startY;
+		startY=endY;
+		endY=tmp;
+	}
+	if(startY > height) startY = height-1;
+	if(startX > width) startX = width-1;
+	if (endX > width) endX = width-1;
+	if (endY > height) endY = height-1;
+	
+	//printf("startX - %d startY - %d endX - %d endY - %d\n",startX,startY,endX,endY);
+	
 	int newHeight, newWidth;;
 	int oldx, oldy;
 	newHeight = abs(endY - startY);
@@ -160,6 +179,12 @@ int main(int argc, char **argv)
 	
 	printf("Enter image name(ONLY .ppm): ");
 	scanf("%s", filename);
+	
+	if(readimage(filename, &head,&pixels)!=0){
+		perror("error reading image\n");
+		return -1;
+	}
+	
 	printf("create new image?(y/n): ");
 	scanf(" %c", &ch);
 	if(ch == 'y' || ch == 'Y'){
@@ -168,20 +193,20 @@ int main(int argc, char **argv)
 			printf("Enter new image name: ");
 			scanf("%s", newfilename);
 			if(fileExists(newfilename)){
-				printf("file with name \"%s\" exists. Try again.\n", newfilename);
-			}else created = 1;
+				printf("file with name \"%s\" exists.\n", newfilename);
+			}else{
+				created=1;
+				newimage(newfilename, head, pixels);
+				strcpy(filename, newfilename);
+			}
 		}
-	}else if(ch == 'n' || ch == 'N'){
-		strcpy(newfilename, filename);
-	}else return 0;
-	
+	}
 	
 rdimg:
 	if(readimage(filename, &head,&pixels)!=0){
 		perror("error reading image\n");
 		return -1;
 	}
-	strcpy(filename, newfilename);
 	
 	printf("format: %s\n", head.format);
 	printf("width px: %d\n", head.width);
@@ -194,10 +219,15 @@ rdimg:
 	scanf("%d",&choice);
 	switch(choice) {
 		case 0:
+			free(pixels);
 			break;
 		case 1:
 			printf("new resolution: ");
 			scanf("%d %d",&newwidth,&newheight);
+			if(!newwidth || !newheight){
+				free(pixels);
+				break;
+			}
 			changeresolution(&pixels, head.width, head.height, newwidth, newheight);
 			head.width=newwidth;
 			head.height=newheight;
@@ -211,32 +241,30 @@ rdimg:
 			head.width=newwidth;
 			head.height=newheight;
 			newimage(filename,head,pixels);
-			printf("image rotated\n");
+			printf("image rotated\n\n");
 			free(pixels);
 			goto rdimg;
 		case 3:
 			grayscale(&pixels,head.width,head.height);
 			newimage(filename,head,pixels);
-			printf("image grayed\n");
+			printf("image grayed\n\n");
 			goto rdimg;
 		case 4:
 			printf("enter coordinats top-left point: \n");
 			scanf("%d %d", &startX, &startY);
 			printf("enter coordinats bot-right point: \n");
 			scanf("%d %d", &endX, &endY);
-			if (endX > head.width) endX = head.width;
-			if (endY > head.height) endY = head.height;
 			cutimage(&pixels, head.width, head.height, startX, startY, endX, endY);
 			head.height = abs(endY - startY);
 			head.width = abs(endX - startX);
 			if(head.height == 0) head.height = 1;
 			if(head.width == 0) head.width = 1;
 			newimage(filename,head,pixels);
-			printf("image cutted\n");
+			printf("image cutted\n\n");
 			free(pixels);
 			goto rdimg;
 		default:
-			printf("unknown choice. try again\n");
+			printf("unknown choice. try again\n\n");
 			goto rdimg;
 	}
 	return 0;
