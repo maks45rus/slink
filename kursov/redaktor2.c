@@ -133,8 +133,7 @@ int readimage(char *filename, PPMHeader *head, unsigned char **pixels)
     char c;
     fseek(image,1,SEEK_CUR);
     if((c = fgetc(image))=='#'){
-		while ((c = fgetc(image)) != EOF && c != '\n')
-			printf("%c", c);
+		while ((c = fgetc(image)) != EOF && c != '\n');
 	}else fseek(image,-1,SEEK_CUR);
 	
 	fscanf(image, "%d %d", &head->width, &head->height);
@@ -248,6 +247,7 @@ rdimg:
 			grayscale(&pixels,head.width,head.height);
 			newimage(filename,head,pixels);
 			printf("image grayed\n\n");
+			free(pixels);
 			goto rdimg;
 		case 4:
 			printf("enter coordinats top-left point: \n");
@@ -265,6 +265,7 @@ rdimg:
 			goto rdimg;
 		default:
 			printf("unknown choice. try again\n\n");
+			free(pixels);
 			goto rdimg;
 	}
 	return 0;
