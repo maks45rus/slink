@@ -63,6 +63,20 @@ void grayscale(unsigned char **pixels, int width, int height)
     *pixels=npixels;
 }
 
+void negative(unsigned char **pixels, int width, int height)
+{	
+	unsigned char *npixels = (unsigned char*)malloc(width * height * 3 * sizeof(unsigned char));
+	
+    for (int i = 0; i < width * height * 3; i += 3) {
+      
+        npixels[i] = 255-(*pixels)[i];
+        npixels[i + 1] = 255-(*pixels)[i+1];
+        npixels[i + 2] = 255-(*pixels)[i+3];
+    }
+    free(*pixels);
+    *pixels=npixels;
+}
+
 void cutimage(unsigned char **pixels, int width, int height, int startX, int startY, int endX, int endY)
 {
 	if (startX > endX){
@@ -105,7 +119,34 @@ void cutimage(unsigned char **pixels, int width, int height, int startX, int sta
     *pixels = cutPixels;
 }
 
-
+void mirror(unsigned char **pixels, int width, int height, char* vect)
+{
+    unsigned char *mirroredPixels = (unsigned char*)malloc(width * height * 3 * sizeof(unsigned char));
+    int oldpos;
+    int newpos;
+    if(strcmp(vect,"h")!=0)
+		for (int x = 0; x < width; ++x) {
+			for (int y = 0; y < height; ++y) {
+				oldpos = (x + y * width) * 3;
+				newpos = (width - x + y * width) * 3;
+				for (int c = 0; c < 3; ++c) {
+					mirroredPixels[oldpos + c] = (*pixels)[newpos + c];
+				}
+			}
+		}
+	else
+		for (int x = 0; x < width; ++x) {
+			for (int y = 0; y < height; ++y) {
+				oldpos = (x + y * width) * 3;
+				newpos = (x + (height - y) * width) * 3;		
+				for (int c = 0; c < 3; ++c) {
+					mirroredPixels[oldpos + c] = (*pixels)[newpos + c];
+				}
+			}
+		}
+    free(*pixels);
+    *pixels = mirroredPixels;
+}
 
 //================================================================
 //================================================================
@@ -168,7 +209,7 @@ int newimage(char *filename, PPMHeader head, unsigned char *pixels)
 int main(int argc, char **argv)
 {	
 	
-	if(argc<4){
+	if(argc<3){
 	printf("how to use:  %s inputimage.ppm (-size width height| -rotate| -gray| -cut x1 y1 x2 y2) result.ppm\n",argv[0]);
 	return 1;
 	}
@@ -204,13 +245,41 @@ int main(int argc, char **argv)
 		head.width=newwidth;
 		head.height=newheight;
 		newimage(newfilename,head,pixels);
-		printf("image rotated\n\n");
+		printf("image rotated\n");
 	}
 	if(strcmp(choice,"-gray")==0){
 		a = 1;
 		grayscale(&pixels,head.width,head.height);
 		newimage(newfilename,head,pixels);
-		printf("image grayed\n\n");
+		printf("image grayed\n");
+	}
+	if(strcmp(choice,"-negative")==0){
+		a = 1;
+		negative(&pixels,head.width,head.height);
+		newimage(newfilename,head,pixels);
+		printf("image grayed\n");
+	}
+	if(strcmp(choice,"-mirror")==0){
+		a = 1;
+		if(argv[4] == NULL) 
+			newfilename = filename;
+		else
+			newfilename = argv[4];
+	
+		if(strcmp(argv[3],"v")==0){
+			
+			mirror(&pixels,head.width,head.height,"v");
+		}else
+		if(strcmp(argv[3],"h")==0){
+			
+			mirror(&pixels,head.width,head.height,"h");
+		}else{
+			printf("how to use:  %s inputimage.ppm (-size width height| -rotate| -gray| -cut x1 y1 x2 y2) result.ppm\n",argv[0]);
+			return 1;
+		}
+		
+		newimage(newfilename,head,pixels);
+		printf("image mirrored\n");
 	}
 	if(strcmp(choice,"-cut")==0){
 		a = 1;
