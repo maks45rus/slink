@@ -96,8 +96,6 @@ void cutimage(unsigned char **pixels, int width, int height, int startX, int sta
 	if (endX > width) endX = width-1;
 	if (endY > height) endY = height-1;
 	
-	//printf("startX - %d startY - %d endX - %d endY - %d\n",startX,startY,endX,endY);
-	
 	int newHeight, newWidth;;
 	int oldx, oldy;
 	newHeight = abs(endY - startY);
@@ -124,33 +122,71 @@ void mirror(unsigned char **pixels, int width, int height, char* vect)
     unsigned char *mirroredPixels = (unsigned char*)malloc(width * height * 3 * sizeof(unsigned char));
     int oldpos;
     int newpos;
-    if(strcmp(vect,"h")!=0)
-		for (int x = 0; x < width; ++x) {
-			for (int y = 0; y < height; ++y) {
+	for (int x = 0; x < width; ++x) {
+		for (int y = 0; y < height; ++y) {
+			if(strcmp(vect,"h")){
 				oldpos = (x + y * width) * 3;
 				newpos = (width - x + y * width) * 3;
-				for (int c = 0; c < 3; ++c) {
-					mirroredPixels[oldpos + c] = (*pixels)[newpos + c];
-				}
-			}
-		}
-	else
-		for (int x = 0; x < width; ++x) {
-			for (int y = 0; y < height; ++y) {
+			}else{
 				oldpos = (x + y * width) * 3;
 				newpos = (x + (height - y) * width) * 3;		
-				for (int c = 0; c < 3; ++c) {
-					mirroredPixels[oldpos + c] = (*pixels)[newpos + c];
-				}
+			}
+			for (int c = 0; c < 3; ++c) {
+				mirroredPixels[oldpos + c] = (*pixels)[newpos + c];
 			}
 		}
+	}
     free(*pixels);
     *pixels = mirroredPixels;
+}
+
+void blur(unsigned char **pixels, int width, int height) {
+   
+    unsigned char *blurredPixels = (unsigned char*)malloc(width * height * 3 * sizeof(unsigned char));
+    if (!blurredPixels) {
+        perror("Memory allocation for blurred image failed");
+        return;
+    }
+
+    for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+            for (int c = 0; c < 3; c++) {
+                int pixelIndex = (y * width + x) * 3 + c;
+                
+                int sum = 0;
+                for (int ny = -1; ny <= 1; ny++) {
+                    for (int nx = -1; nx <= 1; nx++) {
+                        int currentPixelIndex = ((y + ny) * width + (x + nx)) * 3 + c;
+                        sum += (*pixels)[currentPixelIndex];
+                    }
+                }
+                blurredPixels[pixelIndex] = sum / 9;
+            }
+        }
+    }
+
+     free(*pixels);
+    *pixels = blurredPixels;
 }
 
 //================================================================
 //================================================================
 //================================================================
+
+void printhelp()
+{
+	printf("usage:  ./redakt inputimage.ppm [option] result.ppm\n");
+    printf("options:\n");
+    printf("-showstat\n");
+    printf("-blur\n");
+    printf("-rotate\n");
+    printf("-gray\n");
+    printf("-negative\n");
+    printf("-size geometry\n");
+    printf("-cut point1 point2\n");
+    printf("-mirror direction(v/h)\n");
+}
+
 
 int fileExists(const char *filename) {
     
@@ -210,7 +246,7 @@ int main(int argc, char **argv)
 {	
 	
 	if(argc<3){
-	printf("how to use:  %s inputimage.ppm (-size width height| -rotate| -gray| -cut x1 y1 x2 y2) result.ppm\n",argv[0]);
+	printhelp();
 	return 1;
 	}
 	
@@ -230,13 +266,24 @@ int main(int argc, char **argv)
 	char* newfilename;
 	char* choice;
 	int a = 0;
-	if(argv[3] == NULL) 
-		newfilename = filename;
-	else
-		newfilename = argv[3];
 	
+	newfilename = argv[3];
 	choice = argv[2];
 	
+	if(strcmp(choice,"-showstat")==0){
+		a = 1;
+		printf("format: %s\n", head.format);
+		printf("width px: %d\n", head.width);
+		printf("height px: %d\n", head.height);
+		printf("color: %d\n", head.maxColorValue);
+		free(pixels);
+		return 0;
+	}
+	if(argc<4){
+			printhelp();
+			free(pixels);
+			return 1;
+		}
 	if(strcmp(choice,"-rotate")==0){
 		a = 1;
 		rotate(&pixels,head.width,head.height);
@@ -253,6 +300,12 @@ int main(int argc, char **argv)
 		newimage(newfilename,head,pixels);
 		printf("image grayed\n");
 	}
+	if(strcmp(choice,"-blur")==0){
+		a = 1;
+		blur(&pixels,head.width,head.height);
+		newimage(newfilename,head,pixels);
+		printf("image blured\n");
+	}
 	if(strcmp(choice,"-negative")==0){
 		a = 1;
 		negative(&pixels,head.width,head.height);
@@ -261,32 +314,38 @@ int main(int argc, char **argv)
 	}
 	if(strcmp(choice,"-mirror")==0){
 		a = 1;
-		if(argv[4] == NULL) 
-			newfilename = filename;
-		else
-			newfilename = argv[4];
-	
-		if(strcmp(argv[3],"v")==0){
-			
-			mirror(&pixels,head.width,head.height,"v");
-		}else
-		if(strcmp(argv[3],"h")==0){
-			
-			mirror(&pixels,head.width,head.height,"h");
-		}else{
-			printf("how to use:  %s inputimage.ppm (-size width height| -rotate| -gray| -cut x1 y1 x2 y2) result.ppm\n",argv[0]);
+		if(argc<5){
+			printhelp();
+			free(pixels);
 			return 1;
 		}
-		
+		//if(argv[4] == NULL) 
+			//newfilename = filename;
+		//else
+		newfilename = argv[4];
+		if(strcmp(argv[3],"v")==0){
+			mirror(&pixels,head.width,head.height,"v");
+		}else if(strcmp(argv[3],"h")==0){
+			mirror(&pixels,head.width,head.height,"h");
+		}else{
+			printhelp();
+			free(pixels);
+			return 1;
+		}
 		newimage(newfilename,head,pixels);
 		printf("image mirrored\n");
 	}
 	if(strcmp(choice,"-cut")==0){
 		a = 1;
-		if(argv[7] == NULL) 
-			newfilename = filename;
-		else
-			newfilename = argv[7];
+		if(argc<8){
+			printhelp();
+			free(pixels);
+			return 1;
+		}
+		//if(argv[7] == NULL) 
+			//newfilename = filename;
+		//else
+		newfilename = argv[7];
 		endY = atoi(argv[6]);
 		endX = atoi(argv[5]);
 		startY = atoi(argv[4]);
@@ -302,10 +361,15 @@ int main(int argc, char **argv)
 	}
 	if(strcmp(choice,"-size")==0){
 		a = 1;
-		if(argv[5] == NULL) 
-			newfilename = filename;
-		else
-			newfilename = argv[5];
+		if(argc<5){
+			printhelp();
+			free(pixels);
+			return 1;
+		}
+		//if(argv[5] == NULL) 
+			//newfilename = filename;
+		//else
+		newfilename = argv[5];
 		newheight = atoi(argv[4]);
 		newwidth = atoi(argv[3]);
 		changeresolution(&pixels, head.width, head.height, newwidth, newheight);
@@ -315,7 +379,7 @@ int main(int argc, char **argv)
 		printf("size changed\n");
 	}
 	if(a == 0){
-		printf("aaaa\n");
+		printhelp();
 	}
 
 	free(pixels);
