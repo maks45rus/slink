@@ -242,9 +242,18 @@ int newimage(char *filename, PPMHeader head, unsigned char *pixels)
     return 0;
 }
 
+int interactivemode();
+
 int main(int argc, char **argv)
 {	
-	
+	if(argc == 1){
+	int er = interactivemode();
+	return er;
+	}
+	if(strcmp(argv[1],"-help")==0){
+	printhelp();
+	return 0;
+	}
 	if(argc<3){
 	printhelp();
 	return 1;
@@ -284,6 +293,7 @@ int main(int argc, char **argv)
 			free(pixels);
 			return 1;
 		}
+		
 	if(strcmp(choice,"-rotate")==0){
 		a = 1;
 		rotate(&pixels,head.width,head.height);
@@ -310,7 +320,7 @@ int main(int argc, char **argv)
 		a = 1;
 		negative(&pixels,head.width,head.height);
 		newimage(newfilename,head,pixels);
-		printf("image grayed\n");
+		printf("image negatived\n");
 	}
 	if(strcmp(choice,"-mirror")==0){
 		a = 1;
@@ -384,5 +394,144 @@ int main(int argc, char **argv)
 
 	free(pixels);
 	return 0;
+}
+
+int interactivemode()
+{
+	int startX, endX, startY, endY;
+	int newwidth, newheight;
+	unsigned char *pixels;
+	char newfilename[20];
+	char filename[20];
+	char direction;
+	PPMHeader head;
+	int choice=0;
+	char ch;
+	
+	printf("Enter image name(ONLY .ppm): ");
+	scanf("%s", filename);
+	
+	if(readimage(filename, &head,&pixels)!=0){
+		perror("error reading image\n");
+		return -1;
+	}
+	
+	printf("create new image?(y/n): ");
+	scanf(" %c", &ch);
+	if(ch == 'y' || ch == 'Y'){
+		int created=0;
+		while(created==0){
+			printf("Enter new image name: ");
+			scanf("%s", newfilename);
+			if(fileExists(newfilename)){
+				printf("file with name \"%s\" exists.\n", newfilename);
+			}else{
+				created=1;
+				newimage(newfilename, head, pixels);
+				strcpy(filename, newfilename);
+			}
+		}
+	}
+	
+rdimg:
+	if(readimage(filename, &head,&pixels)!=0){
+		perror("error reading image\n");
+		return -1;
+	}
+	
+	printf("Choose what to do\n");
+	printf("\n1-showstat\n2-rotate\n3-gray\n4-cut\n5-mirror\n");
+	printf("6-negative\n7-blur\n8-change resolution\n0-exit\n");
+	scanf("%d",&choice);
+	switch(choice) {
+		case 0:
+			free(pixels);
+			break;
+		case 1:
+			printf("format: %s\n", head.format);
+			printf("width px: %d\n", head.width);
+			printf("height px: %d\n", head.height);
+			printf("color: %d\n", head.maxColorValue);
+			goto rdimg;
+		case 2:
+			rotate(&pixels,head.width,head.height);
+			newwidth=head.height;
+			newheight=head.width;
+			head.width=newwidth;
+			head.height=newheight;
+			newimage(filename,head,pixels);
+			printf("image rotated\n\n");
+			free(pixels);
+			goto rdimg;
+		case 3:
+			grayscale(&pixels,head.width,head.height);
+			newimage(filename,head,pixels);
+			printf("image grayed\n\n");
+			free(pixels);
+			goto rdimg;
+		case 4:
+			printf("enter coordinats top-left point: \n");
+			scanf("%d %d", &startX, &startY);
+			printf("enter coordinats bot-right point: \n");
+			scanf("%d %d", &endX, &endY);
+			cutimage(&pixels, head.width, head.height, startX, startY, endX, endY);
+			head.height = abs(endY - startY);
+			head.width = abs(endX - startX);
+			if(head.height == 0) head.height = 1;
+			if(head.width == 0) head.width = 1;
+			newimage(filename,head,pixels);
+			printf("image cutted\n\n");
+			free(pixels);
+			goto rdimg;
+		case 5:
+			printf("enter directin(v/h): \n");
+			scanf(" %c", &direction);
+			printf("\n");
+			if(direction == 'v'){
+				mirror(&pixels,head.width,head.height,"v");
+			}else if(direction == 'h'){
+				mirror(&pixels,head.width,head.height,"h");
+			}else{
+				printf("error directin\n");
+				free(pixels);
+				goto rdimg;
+			}
+			newimage(filename,head,pixels);
+			printf("image mirrored\n\n");
+			free(pixels);
+			goto rdimg;
+		case 6:
+			negative(&pixels,head.width,head.height);
+			newimage(filename,head,pixels);
+			printf("image negatived\n");
+			free(pixels);
+			goto rdimg;
+		case 7:
+			blur(&pixels,head.width,head.height);
+			newimage(filename,head,pixels);
+			printf("image blured\n");
+			free(pixels);
+			goto rdimg;
+		case 8:
+			printf("new resolution: ");
+			scanf("%d %d",&newwidth,&newheight);
+			if(!newwidth || !newheight){
+				free(pixels);
+				break;
+			}
+			changeresolution(&pixels, head.width, head.height, newwidth, newheight);
+			head.width=newwidth;
+			head.height=newheight;
+			newimage(filename, head, pixels);
+			free(pixels);
+			printf("resolution changed\n\n");
+			goto rdimg;
+		default:
+			printf("unknown choice. try again\n\n");
+			free(pixels);
+			goto rdimg;
+	}
+	return 0;
+
 }
 
