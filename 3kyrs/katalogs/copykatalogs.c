@@ -12,7 +12,7 @@
 
 
 
-void copykatalog(char* name,char* newdir)
+void copykatalog(char* name,char* newdir,char* newdirname)
 {
 	struct stat dir_info;
 	if (lstat(name, &dir_info) == -1) {
@@ -27,7 +27,7 @@ void copykatalog(char* name,char* newdir)
     }
 	struct dirent *info;
 	while((info = readdir(fdir)) != NULL){
-        if(strcmp(info->d_name,".")==0 || strcmp(info->d_name,"..")==0 || strcmp(info->d_name,newdir)==0) continue;
+        if(strcmp(info->d_name,".")==0 || strcmp(info->d_name,"..")==0 || strcmp(info->d_name,newdirname)==0) continue;
         char file[PATH_MAX];
         char newfile[PATH_MAX];
         
@@ -41,7 +41,7 @@ void copykatalog(char* name,char* newdir)
 		
         switch (info->d_type) {
             case DT_DIR:
-				copykatalog(file, newfile);
+				copykatalog(file, newfile, newdirname);
 				break;
             case DT_LNK:
 				char link_target[1024];
@@ -69,7 +69,7 @@ int main()
 	char name[255];
 	printf("enter directory name: ");
 	scanf("%s",name);
-    copykatalog(name,"new");
+    copykatalog(name,"new", "new");
     
 
     return 0; 
