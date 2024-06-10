@@ -58,7 +58,7 @@ void negative(unsigned char **pixels, int width, int height)
       
         npixels[i] = 255-(*pixels)[i];
         npixels[i + 1] = 255-(*pixels)[i+1];
-        npixels[i + 2] = 255-(*pixels)[i+3];
+        npixels[i + 2] = 255-(*pixels)[i+2];
     }
     free(*pixels);
     *pixels=npixels;

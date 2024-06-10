@@ -38,7 +38,8 @@ int readimage(char *filename, PPMHeader *head, unsigned char **pixels)
     if (image == NULL) {
         return -1;
     }
-    fscanf(image, " %s",  head->format);
+    //Считывание магического числа и проверка на соответствие формата
+    fscanf(image, " %s",  head->format);  
     if(strcmp(head->format,"P6")!=0){
 		fclose(image);
 		printf("error format.\n use format PPM P6\n");
@@ -46,19 +47,23 @@ int readimage(char *filename, PPMHeader *head, unsigned char **pixels)
 	}
 	
     char c;
+    //Пропуск возможного комментария
     fseek(image,1,SEEK_CUR);
     if((c = fgetc(image))=='#'){
 		while ((c = fgetc(image)) != EOF && c != '\n');
 	}else fseek(image,-1,SEEK_CUR);
 	
+	//Считывается разрешение картинки и максимальное значение цвета
 	fscanf(image, "%d %d", &head->width, &head->height);
     fscanf(image, "%d", &head->maxColorValue);
+	//Выделение памяти под массив с пикселями
 	*pixels = (unsigned char *)malloc(head->width * head->height * 3 * sizeof(unsigned char));
     if (*pixels == NULL) {
         perror("Memory allocation failed");
         fclose(image);
         return -1;
     }
+    //Считывание пикселей
 	fseek(image,+1,SEEK_CUR);
     fread(*pixels, sizeof(unsigned char), head->width * head->height * 3, image);
     fclose(image);
@@ -167,9 +172,6 @@ int main(int argc, char **argv)
 			free(pixels);
 			return 1;
 		}
-		//if(argv[4] == NULL) 
-			//newfilename = filename;
-		//else
 		newfilename = argv[4];
 		if(strcmp(argv[3],"v")==0){
 			mirror(&pixels,head.width,head.height,"v");
@@ -190,9 +192,6 @@ int main(int argc, char **argv)
 			free(pixels);
 			return 1;
 		}
-		//if(argv[7] == NULL) 
-			//newfilename = filename;
-		//else
 		newfilename = argv[7];
 		endY = atoi(argv[6]);
 		endX = atoi(argv[5]);
@@ -214,9 +213,6 @@ int main(int argc, char **argv)
 			free(pixels);
 			return 1;
 		}
-		//if(argv[5] == NULL) 
-			//newfilename = filename;
-		//else
 		newfilename = argv[5];
 		newheight = atoi(argv[4]);
 		newwidth = atoi(argv[3]);
@@ -355,7 +351,7 @@ rdimg:
 			scanf("%d %d",&newwidth,&newheight);
 			if(!newwidth || !newheight){
 				free(pixels);
-				break;
+				goto rdimg;
 			}
 			changeresolution(&pixels, head.width, head.height, newwidth, newheight);
 			head.width=newwidth;
