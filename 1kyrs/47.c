@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <float.h>
 int main() {
     float x,y,z;
     printf("x = ");
@@ -17,7 +19,7 @@ int main() {
     
     
     
-    if((x+y>z)&&(x+z>y)&&(y+z>x)){
+    if((x+y-z>FLT_EPSILON)&&(x+z-y>FLT_EPSILON)&&(y+z-x>FLT_EPSILON)){
 		printf("Треугольник существует\n"); 
     }else{
 		printf("Треугольник не существует\n");
@@ -25,22 +27,20 @@ int main() {
 	}
 	
 
-	if((x*x+y*y==z*z)||(x*x+z*z==y*y)||(y*y+z*z==x*x)){
-		printf("Треугольник прямоугольный\n"); 
-	}else{ 
+
+	if((x*x+y*y-z*z>=FLT_EPSILON)&&(x*x+z*z-y*y>=FLT_EPSILON)&&(y*y+z*z-x*x>=FLT_EPSILON)){
+		printf("Треугольник остроугольный\n"); 
+	}else if((x*x+y*y-z*z<=-FLT_EPSILON)||(x*x+z*z-y*y<=-FLT_EPSILON)||(y*y+z*z-x*x<=-FLT_EPSILON)){
+		printf("Треугольник не остроугольный\n");
+	}else{
+		printf("Треугольник прямоугольный\n");
+	} 
 		
-		if((x*x+y*y>z*z)&&(x*x+z*z>y*y)&&(y*y+z*z>x*x)){
-			printf("Треугольник остроугольный\n"); 
-		}else{
-			printf("Треугольник не остроугольный\n");
-		} 
-		
-	}
 	
-	if((x==y)&&(y==z)){
+	if((abs(x-y)<FLT_EPSILON)&&(abs(y-z)<FLT_EPSILON)){
 		printf("Треугольник равносторонний\n"); 
 	}else{
-		if((x==y)||(x==z)||(y==z)){
+		if((abs(x-y)<FLT_EPSILON)||(abs(y-z)<FLT_EPSILON)||(abs(y-z)<FLT_EPSILON)){
 			printf("Треугольник равнобедренный\n"); 
 		}
 	}

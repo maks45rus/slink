@@ -1,39 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <float.h>
 int main() {
     float x, y, z, s;
 
     
     scanf("%f %f %f", &x, &y, &z);
 
-    
+    if((abs(x-y)<FLT_EPSILON)||(abs(x-z)<FLT_EPSILON)||(abs(z-y)<FLT_EPSILON)){
+		printf("должны быть попарно различные\n");
+		return 0;
+	}
     
 
-    if (x < y) {
-        if (x < z) {
+    if((y-x) >= FLT_EPSILON){
+        if((z-x) >= FLT_EPSILON){
             s = x;
-        } else {
+        }else{
             s = z;
         }
     } else {
-        if (y < z) {
+        if((z-y) >= FLT_EPSILON){
             s = y;
-        } else {
+        }else{
             s = z;
         }
     }
     
-    if (x + y + z < 1) {
+    if (( 1 - (x + y + z)) >= FLT_EPSILON) {
         
-        if (s == x) {
+        if (abs(s-x) < FLT_EPSILON) {
             x = (y + z) / 2;
-        }else if (s == y) {
+        }else if (abs(s-y) < FLT_EPSILON) {
             y = (x + z) / 2;
         }else{
             z = (x + y) / 2;
         }
     } else {
-        if (x < y) {
+        if ((y-x) >= FLT_EPSILON) {
             x = (y + z) / 2;
         } else {
             y = (x + z) / 2;

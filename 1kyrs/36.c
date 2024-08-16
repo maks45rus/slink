@@ -1,29 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <float.h>
 int main() {
-    int a,b,c;
+    float a,b,c;
     printf("a = ");
-    scanf("%d",&a);
+    scanf("%f",&a);
     printf("\n");
  
     printf("b = ");
-    scanf("%d",&b);
+    scanf("%f",&b);
     printf("\n");
     
     printf("c = ");
-    scanf("%d",&c);
+    scanf("%f",&c);
     printf("\n");
     
     printf("неравенство a<b<c - ");
     
-    if(a<b){
-		if(b<c) printf("выполняется\n"); else printf("не выполняется\n");
+    if((b-a) >= FLT_EPSILON){
+		if((c-b) >= FLT_EPSILON) printf("выполняется\n"); else printf("не выполняется\n");
     }else printf("не выполняется\n");
     
     
     printf("неравенство a>=b>=c - ");
-     if(a>=b){
-		if(b>=c) printf("выполняется\n"); else printf("не выполняется\n");
+     if( !((b-a) >= FLT_EPSILON) ){
+		if( !((c-b) >= FLT_EPSILON) ) printf("выполняется\n"); else printf("не выполняется\n");
+    }else printf("не выполняется\n");
+    
+     printf("неравенство a<=b<=c - ");
+     if( !((a-b) >= FLT_EPSILON) ){
+		if( !((b-c) >= FLT_EPSILON) ) printf("выполняется\n"); else printf("не выполняется\n");
     }else printf("не выполняется\n");
     return 0;
 }
